@@ -1,8 +1,19 @@
 import sys
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import KFold
 from matplotlib import pyplot as plt
-from utilities import load_points_from_file
+
+
+def load_points_from_file(filename):
+    """Loads 2d points from a csv called filename
+    Args:
+        filename : Path to .csv file
+    Returns:
+        (xs, ys) where xs and ys are a numpy array of the co-ordinates.
+    """
+    points = pd.read_csv(filename, header=None)
+    return points[0].values, points[1].values
 
 
 def setify20(xs, ys):
@@ -60,33 +71,6 @@ def cal_sin_cross(xs, ys, xs_test, y_test):
     return cv, a
 
 
-# def cal_linear(xs, ys):
-#     a = least_squares_linear(xs, ys)
-#     ds = a[0] + a[1] * xs
-#     residual = 0
-#     for j in range(0, len(xs)):
-#         residual += ((ys)[j] - ds[j]) ** 2
-#     return residual, ds
-#
-#
-# def cal_cubic(xs, ys):
-#     a = least_squares_cubic(xs, ys)
-#     ds = a[0] + a[1] * xs + a[2] * xs**2 + a[3] * xs**3
-#     residual = 0
-#     for j in range(0, len(xs)):
-#         residual += ((ys)[j] - ds[j]) ** 2
-#     return residual, ds
-#
-#
-# def cal_sin(xs, ys):
-#     a = least_squares_sin(xs, ys)
-#     ds = a[0] + a[1] * np.sin(xs)
-#     residual = 0
-#     for j in range(0, len(xs)):
-#         residual += ((ys)[j] - ds[j]) ** 2
-#     return residual, ds
-
-
 ####################################################################################################
 ####################################################################################################
 
@@ -97,19 +81,11 @@ xs, ys = load_points_from_file(str(sys.argv[1]))
 xSets, ySets = setify20(xs, ys)
 
 residual = 0
-
 # iterating over the number of sets
 for i in range(0, len(xSets)):
-
     plt.scatter(xSets[i], ySets[i])
 
-    # trying test and split
-
-    # X_train, X_test, y_train, y_test = train_test_split(xSets[i], ySets[i], test_size=0.2)
-    # Yh_test = cal_linear_cross(X_train, y_train, X_test)
-    # cross_validation_error = ((y_test - Yh_test) ** 2).mean()
-
-    # trying K fold cross validation
+    # using k-fold cross validation for all three function types
 
     # minimum splits is 2
 
@@ -158,6 +134,9 @@ for i in range(0, len(xSets)):
                                        cross_validation_error_kfold_cubic,
                                        cross_validation_error_kfold_sin)
 
+    # the function with lowest cross validation error will be applied
+    # and it's residual error calculated
+
     if cross_validation_error_kfold == cross_validation_error_kfold_linear:
         ds = average_linear[0] + average_linear[1] * xSets[i]
         for j in range(0, len(xSets[i])):
@@ -175,43 +154,13 @@ for i in range(0, len(xSets)):
             residual += ((ySets[i])[j] - ds[j]) ** 2
         plt.plot(xSets[i], ds, c='red')
 
-    # trying Leave One Out Cross Validation
-
-    # loo = LeaveOneOut()
-    # loo.get_n_splits(xSets[i])
-    # cross_validation_error_loocv = 0
-    # for train_index, test_index in loo.split(xSets[i]):
-    #     X_train, X_test = (xSets[i])[train_index], (xSets[i])[test_index]
-    #     y_train, y_test = (ySets[i])[train_index], (ySets[i])[test_index]
-    #     Yh_test = cal_linear_cross(X_train, y_train, X_test, y_test)
-    #     cross_validation_error_loocv += ((y_test - Yh_test) ** 2).mean()
-    #
-    # cross_validation_error_loocv = cross_validation_error_loocv / number_of_splits
-
-    # using only residuals
-
-    # residual_lin, ds_lin = cal_linear(xSets[i], ySets[i])
-    # residual_qub, ds_cub = cal_cubic(xSets[i], ySets[i])
-    # residual_sin, ds_sin = cal_sin(xSets[i], ySets[i])
-    # residual = min(residual_lin, residual_qub, residual_sin)
-    #
-    # if residual == residual_lin:
-    #     ds = ds_lin
-    #     plt.plot(xSets[i], ds, c='blue')
-    # elif residual == residual_cub:
-    #     ds = ds_qub
-    #     plt.plot(xSets[i], ds, c='green')
-    # elif residual == residual_sin:
-    #     ds = ds_sin
-    #     plt.plot(xSets[i], ds, c='red')
-
 print(residual)
 
 # adding legend to the plot
 
 plt.plot(xSets[0][0], ySets[0][0], c='blue', label='linear')
-plt.plot(xSets[0][0], ySets[0][0], c='green', label='polynomial')
-plt.plot(xSets[0][0], ySets[0][0], c='red', label='unknown')
+plt.plot(xSets[0][0], ySets[0][0], c='green', label='cubic')
+plt.plot(xSets[0][0], ySets[0][0], c='red', label='sine')
 plt.legend()
 if len(sys.argv) == 3 and str(sys.argv[2]) == "--plot":
     plt.show()
